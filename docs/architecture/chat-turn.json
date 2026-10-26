@@ -1,0 +1,229 @@
+{
+  "schema_version": 2,
+  "diagram_type": "workflow",
+  "meta": {
+    "title": "星伴｜聊天回合：输入、提交与取消",
+    "locale": "zh-CN",
+    "output": "chat-turn.html",
+    "quality_profile": "showcase",
+    "animation": "none"
+  },
+  "lanes": [
+    {
+      "id": "intake",
+      "label": "输入分流"
+    },
+    {
+      "id": "turn",
+      "label": "对话回合"
+    },
+    {
+      "id": "finish",
+      "label": "终态与派生数据"
+    }
+  ],
+  "mainPath": [
+    "input",
+    "context",
+    "request",
+    "stream",
+    "complete",
+    "commit",
+    "summary"
+  ],
+  "nodes": [
+    {
+      "id": "input",
+      "lane": "intake",
+      "col": 0,
+      "type": "frontend",
+      "label": "当前用户输入",
+      "sublabel": "文字 / ASR最终结果"
+    },
+    {
+      "id": "local",
+      "lane": "intake",
+      "col": 1,
+      "type": "backend",
+      "label": "本地手机命令",
+      "sublabel": "整句解析，先于Key检查"
+    },
+    {
+      "id": "stop",
+      "lane": "intake",
+      "col": 2,
+      "type": "security",
+      "label": "停止 / 安静",
+      "sublabel": "立即失效当前代际"
+    },
+    {
+      "id": "context",
+      "lane": "turn",
+      "col": 0,
+      "type": "backend",
+      "label": "装配上下文",
+      "sublabel": "人设、完整历史、记忆、摘要"
+    },
+    {
+      "id": "request",
+      "lane": "turn",
+      "col": 1,
+      "type": "cloud",
+      "label": "固定服务请求",
+      "sublabel": "先保存用户pending"
+    },
+    {
+      "id": "stream",
+      "lane": "turn",
+      "col": 2,
+      "type": "frontend",
+      "label": "显示流式台词",
+      "sublabel": "当前owner + token + 前台"
+    },
+    {
+      "id": "complete",
+      "lane": "turn",
+      "col": 3,
+      "type": "security",
+      "label": "完整结束检查",
+      "sublabel": "DONE + STOP + 单根JSON"
+    },
+    {
+      "id": "commit",
+      "lane": "turn",
+      "col": 4,
+      "type": "database",
+      "label": "提交本轮快照",
+      "sublabel": "首段、状态及合规元数据"
+    },
+    {
+      "id": "cancel",
+      "lane": "finish",
+      "col": 2,
+      "type": "backend",
+      "label": "取消并保留中断",
+      "sublabel": "取消网络/音频，拒迟到回调"
+    },
+    {
+      "id": "failed",
+      "lane": "finish",
+      "col": 3,
+      "type": "backend",
+      "label": "失败 / 未完整",
+      "sublabel": "中断文本保留，不提交记忆"
+    },
+    {
+      "id": "summary",
+      "lane": "finish",
+      "col": 4,
+      "type": "backend",
+      "label": "后续段落与摘要",
+      "sublabel": "逐段先存再显示；摘要独立"
+    }
+  ],
+  "edges": [
+    {
+      "id": "input-to-local",
+      "from": "input",
+      "to": "local",
+      "label": "整句命中",
+      "role": "branch"
+    },
+    {
+      "id": "input-to-stop",
+      "from": "input",
+      "to": "stop",
+      "label": "停止意图",
+      "role": "branch"
+    },
+    {
+      "id": "input-to-context",
+      "from": "input",
+      "to": "context",
+      "label": "其他自由文本",
+      "role": "main"
+    },
+    {
+      "id": "context-to-request",
+      "from": "context",
+      "to": "request",
+      "role": "main"
+    },
+    {
+      "id": "request-to-stream",
+      "from": "request",
+      "to": "stream",
+      "role": "main"
+    },
+    {
+      "id": "stream-to-complete",
+      "from": "stream",
+      "to": "complete",
+      "role": "main"
+    },
+    {
+      "id": "complete-to-commit",
+      "from": "complete",
+      "to": "commit",
+      "label": "通过",
+      "role": "main"
+    },
+    {
+      "id": "stream-to-cancel",
+      "from": "stream",
+      "to": "cancel",
+      "label": "取消 / 后台",
+      "role": "branch"
+    },
+    {
+      "id": "complete-to-failed",
+      "from": "complete",
+      "to": "failed",
+      "label": "未完整 / 异常",
+      "role": "error"
+    },
+    {
+      "id": "commit-to-summary",
+      "from": "commit",
+      "to": "summary",
+      "role": "main"
+    }
+  ],
+  "cards": [
+    {
+      "dot": "cyan",
+      "title": "输入与上下文",
+      "items": [
+        "send先解析当前整句DeviceCommands，再处理STOP，再检查所选服务Key。ASR partial只预览，final进入同一send入口。",
+        "上下文使用UTF-8字节代理预算，不等于服务商Token；先保障system/当前输入，再选最多4个完整回合、相关有效记忆与有效摘要。",
+        "ChatViewModel.kt:173–235,464–475；PromptAssembler.kt:27–94；ContextMaintenance.kt:14–41。"
+      ]
+    },
+    {
+      "dot": "emerald",
+      "title": "完成与提交",
+      "items": [
+        "AppStore.save成功后才更新持久态投影；首段流式显示可先于最终完成，后续段落每700ms依次先持久化再发布。",
+        "只有完整结束、合法候选和匹配memoryRevision才能提交记忆；活动还须匹配activityRevision。后续段落失败保留已提交事实。",
+        "ChatViewModel.kt:93,235–327；IncrementalReplyJson.kt:160–204；AppStore.kt:40–44。"
+      ]
+    },
+    {
+      "dot": "rose",
+      "title": "取消、失败与摘要",
+      "items": [
+        "stop失效session/owner、取消Job和SpeechRuntime代际；用户pending及已显示台词转interrupted。启动恢复不自动续发旧请求。",
+        "格式/网络/容量失败不自动重试；摘要只在完整聊天后按来源与修订验证，失败保留旧摘要。",
+        "ChatViewModel.kt:65–90,157–169,298–327,419–447；CompanionSession.kt:14–40。"
+      ]
+    },
+    {
+      "dot": "slate",
+      "title": "来源与验证",
+      "items": [
+        "物理源码读取：2026-10-26T01:49:36.387Z；静态映射，不绑定Git提交。",
+        "来源完整路径与行号见 ../ARCHITECTURE.md；本图校验只证明图产物。"
+      ]
+    }
+  ]
+}

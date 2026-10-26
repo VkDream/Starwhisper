@@ -1,0 +1,444 @@
+{
+  "schema_version": 1,
+  "diagram_type": "architecture",
+  "meta": {
+    "title": "星伴 · Starwhisper｜系统架构",
+    "locale": "zh-CN",
+    "output": "xingban-architecture.html",
+    "quality_profile": "showcase",
+    "views": [
+      {
+        "id": "main",
+        "label": "职责与边界",
+        "focus": [
+          "ui",
+          "session",
+          "store",
+          "dialogue"
+        ],
+        "note": "Android单应用，:app依赖:core。ViewModel编排；core纯规则；持久化是Room单行JSON快照。"
+      },
+      {
+        "id": "chat",
+        "label": "对话与服务",
+        "focus": [
+          "session",
+          "dialogue",
+          "deepseek-official",
+          "opencode-go",
+          "store"
+        ],
+        "note": "整句本地命令先分流；模型只读工具限定时间/显式搜索，不能产生手机动作。"
+      },
+      {
+        "id": "media",
+        "label": "手机与音频",
+        "focus": [
+          "session",
+          "phone",
+          "android-targets",
+          "speech",
+          "asr",
+          "tts"
+        ],
+        "note": "SpeechRuntime拥有本地ASR/TTS/播放器，PhoneRuntime只控制QQ会话和系统移交；后台取消星伴资源。"
+      },
+      {
+        "id": "display",
+        "label": "人物展示",
+        "focus": [
+          "profile",
+          "reducer",
+          "session",
+          "ui",
+          "avatar"
+        ],
+        "note": "当前为六张2D原画、前台呼吸和分区触摸。手选仅覆盖UI显示；Live2D与3D不是当前能力。"
+      }
+    ],
+    "animation": "none"
+  },
+  "components": [
+    {
+      "id": "profile",
+      "type": "backend",
+      "label": "Profile / Behavior",
+      "sublabel": ":core 人设与行为选择",
+      "tag": "当前规则",
+      "pos": [
+        220,
+        80
+      ],
+      "size": [
+        240,
+        94
+      ]
+    },
+    {
+      "id": "reducer",
+      "type": "backend",
+      "label": "Character / Activity",
+      "sublabel": ":core 心情与活动归约",
+      "tag": "唯一语义状态",
+      "pos": [
+        490,
+        80
+      ],
+      "size": [
+        240,
+        94
+      ]
+    },
+    {
+      "id": "store",
+      "type": "database",
+      "label": "AppStore / Room",
+      "sublabel": ":app 单行JSON快照",
+      "tag": "schema 1",
+      "pos": [
+        760,
+        80
+      ],
+      "size": [
+        260,
+        94
+      ]
+    },
+    {
+      "id": "ui",
+      "type": "frontend",
+      "label": "Compose / MainActivity",
+      "sublabel": ":app 交互与页面生命周期",
+      "tag": "当前入口",
+      "pos": [
+        40,
+        380
+      ],
+      "size": [
+        240,
+        104
+      ]
+    },
+    {
+      "id": "session",
+      "type": "backend",
+      "label": "ChatViewModel + Session",
+      "sublabel": ":app 编排、提交与请求身份",
+      "tag": "主线程 / Mutex",
+      "pos": [
+        490,
+        380
+      ],
+      "size": [
+        240,
+        124
+      ]
+    },
+    {
+      "id": "dialogue",
+      "type": "backend",
+      "label": "DialogueClient / SSE",
+      "sublabel": ":app 服务路由与协议检查",
+      "tag": "当前实现",
+      "pos": [
+        940,
+        380
+      ],
+      "size": [
+        260,
+        104
+      ]
+    },
+    {
+      "id": "asr",
+      "type": "external",
+      "label": "Android 语音识别",
+      "sublabel": ":app 平台识别服务包装",
+      "tag": "设备覆盖待验证",
+      "pos": [
+        40,
+        730
+      ],
+      "size": [
+        240,
+        104
+      ]
+    },
+    {
+      "id": "speech",
+      "type": "backend",
+      "label": "SpeechRuntime",
+      "sublabel": ":app ASR / TTS / 本地音乐",
+      "tag": "音频资源所有者",
+      "pos": [
+        490,
+        730
+      ],
+      "size": [
+        240,
+        124
+      ]
+    },
+    {
+      "id": "avatar",
+      "type": "frontend",
+      "label": "Companion2DAvatar",
+      "sublabel": ":app 六图、呼吸与分区反馈",
+      "tag": "当前主页",
+      "pos": [
+        940,
+        730
+      ],
+      "size": [
+        260,
+        124
+      ]
+    },
+    {
+      "id": "tts",
+      "type": "cloud",
+      "label": "MiniMax / 系统TTS",
+      "sublabel": "用户显式选择，默认关闭",
+      "tag": "语音体验待验证",
+      "pos": [
+        490,
+        1040
+      ],
+      "size": [
+        240,
+        104
+      ]
+    },
+    {
+      "id": "phone",
+      "type": "backend",
+      "label": "PhoneRuntime",
+      "sublabel": ":app QQ会话 / 系统移交",
+      "tag": "手机资源所有者",
+      "pos": [
+        40,
+        230
+      ],
+      "size": [
+        240,
+        94
+      ]
+    },
+    {
+      "id": "android-targets",
+      "type": "external",
+      "label": "QQ / 系统应用",
+      "sublabel": "会话、时钟、权限设置",
+      "tag": "外部状态未担保",
+      "pos": [
+        40,
+        80
+      ],
+      "size": [
+        150,
+        94
+      ]
+    },
+    {
+      "id": "deepseek-official",
+      "type": "cloud",
+      "label": "DeepSeek 官方",
+      "sublabel": "Chat / 搜索：官方Key",
+      "tag": "外部服务",
+      "pos": [
+        825,
+        230
+      ],
+      "size": [
+        150,
+        94
+      ]
+    },
+    {
+      "id": "opencode-go",
+      "type": "cloud",
+      "label": "OpenCode Go",
+      "sublabel": "Chat / 摘要：Go Key",
+      "tag": "外部服务",
+      "pos": [
+        1005,
+        230
+      ],
+      "size": [
+        195,
+        94
+      ]
+    }
+  ],
+  "connections": [
+    {
+      "id": "profile-context",
+      "from": "profile",
+      "to": "session",
+      "label": "上下文"
+    },
+    {
+      "id": "session-reducer",
+      "from": "session",
+      "to": "reducer",
+      "label": "事件归约"
+    },
+    {
+      "id": "session-store",
+      "from": "session",
+      "to": "store",
+      "label": "事务快照"
+    },
+    {
+      "id": "ui-session",
+      "from": "ui",
+      "to": "session",
+      "label": "输入与设置",
+      "variant": "emphasis"
+    },
+    {
+      "id": "session-dialogue",
+      "from": "session",
+      "to": "dialogue",
+      "label": "Chat / 摘要",
+      "variant": "emphasis"
+    },
+    {
+      "id": "ui-asr",
+      "from": "speech",
+      "to": "asr",
+      "label": "识别请求"
+    },
+    {
+      "id": "asr-speech",
+      "from": "asr",
+      "to": "speech",
+      "label": "最终结果"
+    },
+    {
+      "id": "speech-session",
+      "from": "speech",
+      "to": "session",
+      "label": "识别/播放状态",
+      "fromSide": "top",
+      "toSide": "bottom"
+    },
+    {
+      "id": "session-speech",
+      "from": "session",
+      "to": "speech",
+      "label": "播报与来源",
+      "fromSide": "bottom",
+      "toSide": "top"
+    },
+    {
+      "id": "session-avatar",
+      "from": "session",
+      "to": "avatar",
+      "label": "自动活动投影"
+    },
+    {
+      "id": "speech-avatar",
+      "from": "speech",
+      "to": "avatar",
+      "label": "说话状态"
+    },
+    {
+      "id": "speech-tts",
+      "from": "speech",
+      "to": "tts",
+      "label": "显式选择"
+    },
+    {
+      "id": "avatar-touch",
+      "from": "avatar",
+      "to": "session",
+      "label": "本地触摸"
+    },
+    {
+      "id": "session-phone",
+      "from": "session",
+      "to": "phone",
+      "label": "整句命令"
+    },
+    {
+      "id": "phone-session",
+      "from": "phone",
+      "to": "session",
+      "label": "会话状态"
+    },
+    {
+      "id": "phone-targets",
+      "from": "phone",
+      "to": "android-targets",
+      "label": "会话 / Intent"
+    },
+    {
+      "id": "dialogue-deepseek",
+      "from": "dialogue",
+      "to": "deepseek-official",
+      "label": "官方Key"
+    },
+    {
+      "id": "dialogue-go",
+      "from": "dialogue",
+      "to": "opencode-go",
+      "label": "Go Key"
+    }
+  ],
+  "cards": [
+    {
+      "dot": "cyan",
+      "title": "应用与纯规则",
+      "items": [
+        "MainActivity→CompanionApp→ChatViewModel；UI展示StateFlow，核心规则不直接操作Android。",
+        "ChatViewModel独占请求Job、owner、Mutex提交；CompanionSession只校验turnId/generation/memoryRevision。",
+        "app/build.gradle.kts:31–45；MainActivity.kt:17–60；ChatViewModel.kt:45–93；CompanionSession.kt:5–40。"
+      ]
+    },
+    {
+      "dot": "emerald",
+      "title": "数据与服务边界",
+      "items": [
+        "Room唯一业务表companion_snapshot(id,payload)，应用读写id=1；messages/memory/summary均为payload逻辑字段。",
+        "独立SecretStore使用AndroidKeyStore + AES-GCM；备份只经StateCodec，不含Key。",
+        "AppStore.kt:22–44；StateCodec.kt:87–156；SecretStore.kt:13–37。"
+      ]
+    },
+    {
+      "dot": "violet",
+      "title": "手机与音频所有权",
+      "items": [
+        "手机动作仅由当前用户整句有限命令触发；模型、网页、记忆不能调用PhoneRuntime。",
+        "QQ仅固定包活跃MediaSession；权限、action与音量scope逐次检查。音乐来源qq会释放星伴本地播放器。",
+        "ChatViewModel.kt:173–197,339–388；PhoneRuntime.kt:79–179,302–321；SpeechRuntime.kt:242–274。"
+      ]
+    },
+    {
+      "dot": "amber",
+      "title": "当前展示和未接入能力",
+      "items": [
+        "六张2D原画＋前台轻微缩放呼吸；手选仅UI覆盖。光圈520ms，短句/业务触摸650ms节流。",
+        "主页使用Companion2DAvatar；Live2D与3D不是当前运行能力。",
+        "CompanionApp.kt:53–89；Companion2DAvatar.kt:60–115,156–243。"
+      ]
+    },
+    {
+      "dot": "rose",
+      "title": "证据边界",
+      "items": [
+        "本轮只读物理源码、整理文档与图形；不运行App、业务测试、API、ADB或Release。",
+        "已有r17记录为63项JVM、6个隔离模拟器方法与3个真实App链路样本；本轮未复跑。",
+        "真实QQ歌曲/队列、真机和Release仍未验证。运行证据由APP_IMPLEMENTATION.md承载。"
+      ]
+    },
+    {
+      "dot": "slate",
+      "title": "来源与验证",
+      "items": [
+        "物理源码读取：2026-10-26T01:49:36.387Z；静态映射，不绑定Git提交。",
+        "来源完整路径与行号见 ../ARCHITECTURE.md；本图校验只证明图产物。"
+      ]
+    }
+  ]
+}

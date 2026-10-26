@@ -1,0 +1,50 @@
+[
+  {
+    "id": "meditation_impromptu_01",
+    "title": "Meditation Impromptu 01",
+    "author": "Kevin MacLeod (incompetech.com)",
+    "sourcePage": "https://incompetech.com/music/royalty-free/index.html?isrc=USUAN1100163",
+    "downloadUrl": "https://incompetech.com/music/royalty-free/mp3-royaltyfree/Meditation%20Impromptu%2001.mp3",
+    "license": "CC BY4.0",
+    "licenseUrl": "https://creativecommons.org/licenses/by/4.0/",
+    "localFile": "app/src/main/res/raw/bgm_meditation_impromptu_01.mp3",
+    "bytes": 7042622,
+    "observedHttp": 200,
+    "observedContentType": "application/octet-stream",
+    "firstThreeBytes": "ID3",
+    "durationMillis": "UNKNOWN_PENDING_MEDIA_METADATA",
+    "audioChanges": "NONE"
+  },
+  {
+    "id": "avec_soin",
+    "title": "Avec Soin",
+    "author": "Kevin MacLeod (incompetech.com)",
+    "sourcePage": "https://incompetech.com/music/royalty-free/index.html?isrc=USUAN1100860",
+    "downloadUrl": "https://incompetech.com/music/royalty-free/mp3-royaltyfree/Avec%20Soin.mp3",
+    "license": "CC BY4.0",
+    "licenseUrl": "https://creativecommons.org/licenses/by/4.0/",
+    "localFile": "app/src/main/res/raw/bgm_avec_soin.mp3",
+    "bytes": 5805568,
+    "observedHttp": 200,
+    "observedContentType": "application/octet-stream",
+    "firstThreeBytes": "ID3",
+    "durationMillis": "UNKNOWN_PENDING_MEDIA_METADATA",
+    "audioChanges": "NONE"
+  },
+  {
+    "id": "moonstone",
+    "title": "Moonstone",
+    "author": "Kevin MacLeod (incompetech.com)",
+    "sourcePage": "https://incompetech.com/music/royalty-free/index.html?isrc=USUAN1100145",
+    "downloadUrl": "https://incompetech.com/music/royalty-free/mp3-royaltyfree/Moonstone.mp3",
+    "license": "CC BY4.0",
+    "licenseUrl": "https://creativecommons.org/licenses/by/4.0/",
+    "localFile": "app/src/main/res/raw/bgm_moonstone.mp3",
+    "bytes": 10331806,
+    "observedHttp": 200,
+    "observedContentType": "application/octet-stream",
+    "firstThreeBytes": "ID3",
+    "durationMillis": "UNKNOWN_PENDING_MEDIA_METADATA",
+    "audioChanges": "NONE"
+  }
+]

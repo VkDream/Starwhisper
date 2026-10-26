@@ -1,0 +1,259 @@
+{
+  "schema_version": 2,
+  "diagram_type": "workflow",
+  "meta": {
+    "title": "星伴｜手机动作、QQ会话与音频所有权",
+    "locale": "zh-CN",
+    "output": "phone-audio.html",
+    "quality_profile": "showcase",
+    "animation": "none"
+  },
+  "lanes": [
+    {
+      "id": "command",
+      "label": "用户明确动作"
+    },
+    {
+      "id": "qq",
+      "label": "QQ会话执行"
+    },
+    {
+      "id": "lifecycle",
+      "label": "星伴媒体与生命周期"
+    }
+  ],
+  "mainPath": [
+    "input",
+    "parse",
+    "persist",
+    "gate",
+    "scope",
+    "execute",
+    "result"
+  ],
+  "nodes": [
+    {
+      "id": "input",
+      "lane": "command",
+      "col": 0,
+      "type": "frontend",
+      "label": "当前整句命令",
+      "sublabel": "或用户点击音量控制"
+    },
+    {
+      "id": "parse",
+      "lane": "command",
+      "col": 1,
+      "type": "backend",
+      "label": "识别受支持动作",
+      "sublabel": "整句解析 / UI明确动作"
+    },
+    {
+      "id": "persist",
+      "lane": "command",
+      "col": 2,
+      "type": "database",
+      "label": "先保存本地回应",
+      "sublabel": "移交用将来时，写失败不执行"
+    },
+    {
+      "id": "handoff",
+      "lane": "command",
+      "col": 3,
+      "type": "external",
+      "label": "系统应用移交",
+      "sublabel": "打开QQ / 设置闹钟请求"
+    },
+    {
+      "id": "gate",
+      "lane": "qq",
+      "col": 2,
+      "type": "security",
+      "label": "QQ会话权限门",
+      "sublabel": "安装 + 通知访问 + 活跃会话"
+    },
+    {
+      "id": "scope",
+      "lane": "qq",
+      "col": 3,
+      "type": "security",
+      "label": "action / scope复核",
+      "sublabel": "音量范围须与捕获时一致"
+    },
+    {
+      "id": "execute",
+      "lane": "qq",
+      "col": 4,
+      "type": "external",
+      "label": "提交平台请求",
+      "sublabel": "MediaController / 音量目标"
+    },
+    {
+      "id": "result",
+      "lane": "qq",
+      "col": 5,
+      "type": "database",
+      "label": "保存真实返回",
+      "sublabel": "不等于歌曲已播 / 闹钟已建"
+    },
+    {
+      "id": "foreground",
+      "lane": "lifecycle",
+      "col": 0,
+      "type": "frontend",
+      "label": "Activity可见性",
+      "sublabel": "onStart / onStop"
+    },
+    {
+      "id": "speech",
+      "lane": "lifecycle",
+      "col": 1,
+      "type": "backend",
+      "label": "SpeechRuntime",
+      "sublabel": "ASR、TTS、本地音乐与焦点"
+    },
+    {
+      "id": "source",
+      "lane": "lifecycle",
+      "col": 2,
+      "type": "backend",
+      "label": "音乐来源local / qq",
+      "sublabel": "qq时释放星伴本地播放器"
+    },
+    {
+      "id": "background",
+      "lane": "lifecycle",
+      "col": 3,
+      "type": "backend",
+      "label": "后台取消与解绑",
+      "sublabel": "星伴停播；QQ仅停止观察"
+    }
+  ],
+  "edges": [
+    {
+      "id": "input-to-parse",
+      "from": "input",
+      "to": "parse",
+      "role": "main"
+    },
+    {
+      "id": "parse-to-persist",
+      "from": "parse",
+      "to": "persist",
+      "role": "main"
+    },
+    {
+      "id": "persist-to-gate",
+      "from": "persist",
+      "to": "gate",
+      "label": "QQ控制",
+      "role": "main"
+    },
+    {
+      "id": "gate-to-scope",
+      "from": "gate",
+      "to": "scope",
+      "label": "门通过",
+      "role": "main"
+    },
+    {
+      "id": "scope-to-execute",
+      "from": "scope",
+      "to": "execute",
+      "label": "支持且范围未变",
+      "role": "main"
+    },
+    {
+      "id": "execute-to-result",
+      "from": "execute",
+      "to": "result",
+      "role": "main"
+    },
+    {
+      "id": "persist-to-handoff",
+      "from": "persist",
+      "to": "handoff",
+      "label": "打开 / 闹钟",
+      "role": "branch"
+    },
+    {
+      "id": "handoff-to-result",
+      "from": "handoff",
+      "to": "result",
+      "label": "系统返回",
+      "role": "branch"
+    },
+    {
+      "id": "foreground-to-speech",
+      "from": "foreground",
+      "to": "speech",
+      "role": "branch"
+    },
+    {
+      "id": "speech-to-source",
+      "from": "speech",
+      "to": "source",
+      "role": "branch"
+    },
+    {
+      "id": "foreground-to-background",
+      "from": "foreground",
+      "to": "background",
+      "label": "onStop",
+      "role": "branch"
+    },
+    {
+      "id": "background-to-gate",
+      "from": "background",
+      "to": "gate",
+      "label": "解除QQ观察",
+      "role": "branch"
+    }
+  ],
+  "cards": [
+    {
+      "dot": "cyan",
+      "title": "当前用户才能发起动作",
+      "items": [
+        "模型最终JSON没有手机动作通道。当前整句解析先于聊天Key检查；PhoneRuntime.execute还须在主线程且前台。",
+        "系统移交前保存将来时回应；平台动作已返回后用NonCancellable提交结果，保存失败明确说明未证持久化。",
+        "DeviceCommands.kt:5–41；ChatViewModel.kt:173–197,332–374。"
+      ]
+    },
+    {
+      "dot": "rose",
+      "title": "QQ权限、action与音量范围",
+      "items": [
+        "只选com.tencent.qqmusic活跃MediaSession；通知访问由用户在系统设置授予，服务仅提供会话访问，不读或保留通知内容。",
+        "播放/暂停/上下首须有对应action。音量仅绝对控制、maxVolume>0；LOCAL_SHARED=手机系统共享，REMOTE_OUTPUT=播放设备。expectedScope缺失或变化即拒绝。",
+        "PhoneRuntime.kt:79–179,203–229,263–311,313–321。"
+      ]
+    },
+    {
+      "dot": "violet",
+      "title": "资源与生命周期",
+      "items": [
+        "SpeechRuntime拥有识别器、TTS队列、MiniMax请求、MediaPlayer和焦点。语音默认off，system/minimax显式选择；听说互斥，按句排队。",
+        "本地音乐只在前台local且无识别/播报/焦点阻断时恢复；选择qq释放本地播放器。PhoneRuntime只控制QQ会话，不把QQ音量当独立App音量。",
+        "MainActivity.kt:59–60；ChatViewModel.kt:120–128,380–388,459–475,551；SpeechRuntime.kt:131–215,242–274,396–444。"
+      ]
+    },
+    {
+      "dot": "amber",
+      "title": "外部结果与未验证范围",
+      "items": [
+        "后台取消星伴回合/识别/播报并解除QQ观察；这不表示应用暂停了QQ播放。onCleared释放phone和speech拥有的资源。",
+        "QQ曲名/队列来自实际会话，队列可以缺失，最多展示50项。闹钟只提交系统请求，最终状态由目标应用确认。",
+        "PhoneRuntime.kt:203–229,269–298；真实QQ歌曲/队列、真机及Release未验证。"
+      ]
+    },
+    {
+      "dot": "slate",
+      "title": "来源与验证",
+      "items": [
+        "物理源码读取：2026-10-26T01:49:36.387Z；静态映射，不绑定Git提交。",
+        "来源完整路径与行号见 ../ARCHITECTURE.md；本图校验只证明图产物。"
+      ]
+    }
+  ]
+}

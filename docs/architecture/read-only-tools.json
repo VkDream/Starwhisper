@@ -1,0 +1,206 @@
+{
+  "schema_version": 2,
+  "diagram_type": "workflow",
+  "meta": {
+    "title": "星伴｜只读时间与搜索：规划到最终回复",
+    "locale": "zh-CN",
+    "output": "read-only-tools.html",
+    "quality_profile": "showcase",
+    "animation": "none"
+  },
+  "lanes": [
+    {
+      "id": "intent",
+      "label": "当前意图与规划"
+    },
+    {
+      "id": "read",
+      "label": "只读执行与回复"
+    },
+    {
+      "id": "network",
+      "label": "联网分支与拒绝"
+    }
+  ],
+  "mainPath": [
+    "intent",
+    "plan",
+    "validate",
+    "clock",
+    "attach",
+    "final",
+    "publish"
+  ],
+  "nodes": [
+    {
+      "id": "intent",
+      "lane": "intent",
+      "col": 0,
+      "type": "frontend",
+      "label": "本轮用户问题",
+      "sublabel": "显式搜索 / 当前时间"
+    },
+    {
+      "id": "direct",
+      "lane": "intent",
+      "col": 1,
+      "type": "backend",
+      "label": "直接最终请求",
+      "sublabel": "无工具意图的普通聊天"
+    },
+    {
+      "id": "plan",
+      "lane": "intent",
+      "col": 2,
+      "type": "cloud",
+      "label": "一轮只读规划",
+      "sublabel": "当前服务与固定路由"
+    },
+    {
+      "id": "validate",
+      "lane": "read",
+      "col": 2,
+      "type": "security",
+      "label": "完整校验工具请求",
+      "sublabel": "最多2工具 / 1搜索"
+    },
+    {
+      "id": "clock",
+      "lane": "read",
+      "col": 3,
+      "type": "backend",
+      "label": "读取设备墙钟",
+      "sublabel": "系统时间与时区，瞬时数据"
+    },
+    {
+      "id": "search",
+      "lane": "network",
+      "col": 3,
+      "type": "cloud",
+      "label": "官方搜索接口",
+      "sublabel": "独立官方Key，最多3来源"
+    },
+    {
+      "id": "attach",
+      "lane": "read",
+      "col": 4,
+      "type": "backend",
+      "label": "装配不可信资料",
+      "sublabel": "有界上下文，拒越权指令"
+    },
+    {
+      "id": "final",
+      "lane": "read",
+      "col": 5,
+      "type": "cloud",
+      "label": "无tools最终回复",
+      "sublabel": "严格JSON / DONE / STOP"
+    },
+    {
+      "id": "publish",
+      "lane": "network",
+      "col": 5,
+      "type": "frontend",
+      "label": "校验后发布",
+      "sublabel": "搜索先校验URL，再显示"
+    }
+  ],
+  "edges": [
+    {
+      "id": "intent-to-direct",
+      "from": "intent",
+      "to": "direct",
+      "label": "无需工具",
+      "role": "branch"
+    },
+    {
+      "id": "intent-to-plan",
+      "from": "intent",
+      "to": "plan",
+      "label": "命中只读意图",
+      "role": "main"
+    },
+    {
+      "id": "plan-to-validate",
+      "from": "plan",
+      "to": "validate",
+      "role": "main"
+    },
+    {
+      "id": "validate-to-clock",
+      "from": "validate",
+      "to": "clock",
+      "label": "时间工具",
+      "role": "main"
+    },
+    {
+      "id": "validate-to-search",
+      "from": "validate",
+      "to": "search",
+      "label": "显式搜索",
+      "role": "branch"
+    },
+    {
+      "id": "clock-to-attach",
+      "from": "clock",
+      "to": "attach",
+      "role": "main"
+    },
+    {
+      "id": "search-to-attach",
+      "from": "search",
+      "to": "attach",
+      "role": "branch"
+    },
+    {
+      "id": "attach-to-final",
+      "from": "attach",
+      "to": "final",
+      "role": "main"
+    },
+    {
+      "id": "final-to-publish",
+      "from": "final",
+      "to": "publish",
+      "label": "完整且链接合法",
+      "role": "main"
+    }
+  ],
+  "cards": [
+    {
+      "dot": "cyan",
+      "title": "只有两个只读工具",
+      "items": [
+        "get_device_time不接收参数；web_search只接收query（1–128 Unicode字符）。名称、ID、参数及结束原因先全部验证。",
+        "普通聊天跳过规划。当前时间问题只能选时间工具；显式搜索必须实际得到并执行搜索请求，否则终止并说明。",
+        "ReadOnlyTools.kt:29–32,86–149,169–229；DialogueClient.kt:59–80。"
+      ]
+    },
+    {
+      "dot": "amber",
+      "title": "预算与信任边界",
+      "items": [
+        "最多一轮规划、2工具、1次搜索；搜索30秒、256KiB；最终有界工具上下文4800字节代理。预算或协议不通过即终止，不自动重试。",
+        "搜索资料标为untrusted_material，不能成为手机权限或用户事实。最终生成不再提供tools，原始规划推理不显示或持久化。",
+        "ReadOnlyTools.kt:157–166,171–255,262–289；DialogueClient.kt:105–115。"
+      ]
+    },
+    {
+      "dot": "emerald",
+      "title": "公开回答与用量",
+      "items": [
+        "搜索结果最多3条https来源；最终回复先整体缓冲，只允许实际返回的URL，再附实际查询时间与来源。",
+        "规划、最终回复、摘要分别观察实际usage；本机账本按请求去重。官方参考费用、Go回传cost与搜索计数分开，缺失保持UNKNOWN。",
+        "DialogueClient.kt:65–80,144–176；ChatViewModel.kt:393–416；ContextMaintenance.kt:68–122。"
+      ]
+    },
+    {
+      "dot": "slate",
+      "title": "来源与验证",
+      "items": [
+        "物理源码读取：2026-10-26T01:49:36.387Z；静态映射，不绑定Git提交。",
+        "来源完整路径与行号见 ../ARCHITECTURE.md；本图校验只证明图产物。"
+      ]
+    }
+  ]
+}

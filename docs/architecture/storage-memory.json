@@ -1,0 +1,227 @@
+{
+  "schema_version": 2,
+  "diagram_type": "workflow",
+  "meta": {
+    "title": "星伴｜快照、记忆来源与备份恢复",
+    "locale": "zh-CN",
+    "output": "storage-memory.html",
+    "quality_profile": "showcase",
+    "animation": "none"
+  },
+  "lanes": [
+    {
+      "id": "memory",
+      "label": "来源与派生资料"
+    },
+    {
+      "id": "store",
+      "label": "逻辑状态与物理持久化"
+    },
+    {
+      "id": "backup",
+      "label": "用户备份与恢复"
+    }
+  ],
+  "mainPath": [
+    "user",
+    "candidate",
+    "validate",
+    "state",
+    "codec",
+    "room"
+  ],
+  "nodes": [
+    {
+      "id": "user",
+      "lane": "memory",
+      "col": 0,
+      "type": "frontend",
+      "label": "本轮用户原文",
+      "sublabel": "ID + 绝对时间 + 完整文本"
+    },
+    {
+      "id": "candidate",
+      "lane": "memory",
+      "col": 1,
+      "type": "cloud",
+      "label": "模型记忆候选",
+      "sublabel": "key + 原句证据，最多6条"
+    },
+    {
+      "id": "validate",
+      "lane": "memory",
+      "col": 2,
+      "type": "security",
+      "label": "来源与修订校验",
+      "sublabel": "完整结束 / 原文完整句 / 未抑制"
+    },
+    {
+      "id": "context",
+      "lane": "memory",
+      "col": 3,
+      "type": "backend",
+      "label": "下一轮有效上下文",
+      "sublabel": "完整回合、有效记忆及摘要"
+    },
+    {
+      "id": "state",
+      "lane": "store",
+      "col": 2,
+      "type": "backend",
+      "label": "AppData逻辑状态",
+      "sublabel": "messages / memory / summary等"
+    },
+    {
+      "id": "codec",
+      "lane": "store",
+      "col": 3,
+      "type": "backend",
+      "label": "StateCodec JSON",
+      "sublabel": "白名单、容量与来源检查"
+    },
+    {
+      "id": "room",
+      "lane": "store",
+      "col": 4,
+      "type": "database",
+      "label": "Room：单表单行",
+      "sublabel": "companion_snapshot：id=1"
+    },
+    {
+      "id": "export",
+      "lane": "backup",
+      "col": 2,
+      "type": "backend",
+      "label": "导出当前快照",
+      "sublabel": "Mutex一致读取，不含Key"
+    },
+    {
+      "id": "file",
+      "lane": "backup",
+      "col": 3,
+      "type": "external",
+      "label": "用户选择的JSON文件",
+      "sublabel": "含私密聊天，最多8MiB"
+    },
+    {
+      "id": "restore",
+      "lane": "backup",
+      "col": 4,
+      "type": "security",
+      "label": "校验后恢复提交",
+      "sublabel": "保留本机用量，清旧摘要"
+    }
+  ],
+  "edges": [
+    {
+      "id": "user-to-candidate",
+      "from": "user",
+      "to": "candidate",
+      "role": "main"
+    },
+    {
+      "id": "candidate-to-validate",
+      "from": "candidate",
+      "to": "validate",
+      "role": "main"
+    },
+    {
+      "id": "validate-to-state",
+      "from": "validate",
+      "to": "state",
+      "label": "合规候选",
+      "role": "main"
+    },
+    {
+      "id": "state-to-codec",
+      "from": "state",
+      "to": "codec",
+      "role": "main"
+    },
+    {
+      "id": "codec-to-room",
+      "from": "codec",
+      "to": "room",
+      "label": "AppStore事务",
+      "role": "main"
+    },
+    {
+      "id": "state-to-context",
+      "from": "state",
+      "to": "context",
+      "label": "检索 / 有效性校验",
+      "role": "branch"
+    },
+    {
+      "id": "state-to-export",
+      "from": "state",
+      "to": "export",
+      "role": "branch"
+    },
+    {
+      "id": "export-to-file",
+      "from": "export",
+      "to": "file",
+      "role": "branch"
+    },
+    {
+      "id": "file-to-restore",
+      "from": "file",
+      "to": "restore",
+      "role": "branch"
+    },
+    {
+      "id": "restore-to-room",
+      "from": "restore",
+      "to": "room",
+      "label": "VM经AppStore提交",
+      "role": "branch"
+    }
+  ],
+  "cards": [
+    {
+      "dot": "emerald",
+      "title": "真实表结构",
+      "items": [
+        "Room schema=1，数据库xingban.db；唯一实体SnapshotRow(id:Int主键,payload:String)，应用读写id=1。",
+        "messages、character、memory、settings、activity、summary、usage等都是payload逻辑字段。没有独立消息表、记忆表、摘要表或外键关系。",
+        "AppStore.kt:7–44；StateCodec.kt:87–156。"
+      ]
+    },
+    {
+      "dot": "cyan",
+      "title": "记忆和摘要来源",
+      "items": [
+        "记忆候选只引用本轮用户原文，校验revision、来源抑制、上下文边界、完整句证据；同key冲突等待用户更正，不自动覆盖。语义是否真实仍依赖模型判断。",
+        "摘要保留sourceIds和contextBoundaryMillis，只能来自完整回合；是可能有误的派生资料，不能当成新用户事实。",
+        "Memory.kt:119–202；ContextMaintenance.kt:14–63；ChatViewModel.kt:260–272,419–447。"
+      ]
+    },
+    {
+      "dot": "rose",
+      "title": "更正、忘记与恢复",
+      "items": [
+        "更正/忘记先stop，再增加记忆revision、抑制旧来源、推进上下文边界并清摘要；原聊天与旧备份仍保留。",
+        "恢复先完整decode，之后stop并提交：pending→interrupted、清摘要/离开时间、保留本机usage、重建Session；失败不清空原数据。",
+        "ChatViewModel.kt:521–549；Memory.kt:145–169；MainActivity.kt:22–47。"
+      ]
+    },
+    {
+      "dot": "violet",
+      "title": "独立凭据边界",
+      "items": [
+        "SecretStore用AndroidKeyStore AES-GCM加密Key，只把密文写入应用私有preferences。AppData及StateCodec不包含Key。",
+        "导出/恢复走用户文件选择器；系统自动备份已禁用。备份是用户私密数据，不应随仓库公开。",
+        "SecretStore.kt:13–37；StateCodec.kt:7–9,87–103；AndroidManifest.xml:12。"
+      ]
+    },
+    {
+      "dot": "slate",
+      "title": "来源与验证",
+      "items": [
+        "物理源码读取：2026-10-26T01:49:36.387Z；静态映射，不绑定Git提交。",
+        "来源完整路径与行号见 ../ARCHITECTURE.md；本图校验只证明图产物。"
+      ]
+    }
+  ]
+}
